@@ -16,6 +16,7 @@
 #define READ_AMPERE_PERIOD	1000	
 
 #define MAX_CHARGING_VOLTAGE	82	
+#define MAX_CHARGING_AMPERE		82	
 int scrTrunOnDuty;
 int readZeroCrossing_PC14 = PC14;
 int AmperePin =PA2;
@@ -51,7 +52,9 @@ void handler_tm2()
 		Serial.print("Amp: "); Serial.print(chargingAmpere ); Serial.print("	vol: "); Serial.println((float)chargingVoltage ); Serial.println(analogRead(VoltagePin));
 	}
 	//제로크로싱일 일어났고, 이제 전원공급이 시작되었다.
-	if(startTimer2 && scrStartDelayTime > 0  &&  chargingVoltage <= MAX_CHARGING_VOLTAGE	){
+	if(startTimer2 && scrStartDelayTime > 0  &&  
+			chargingVoltage <= MAX_CHARGING_VOLTAGE	 && 
+			chargingAmpere  <= MAX_CHARGING_AMPERE		){
 		scrStartDelayTime-- ;
 		digitalWrite(scrOnOff_PA1,0);
 		if(  scrStartDelayTime == 0 ){
