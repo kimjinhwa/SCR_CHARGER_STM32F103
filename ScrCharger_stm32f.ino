@@ -10,6 +10,7 @@
 
 #define SCR_MIN_STARTTIME	100
 //8300us = 8.3ms
+#define SCR_MIN_STARTTIME   80 
 #define SCR_MAX_STARTTIME   830 
 #define SCR_DEFAULT_STARTTIME 820	
 //매 10ms마다 값을 읽는다. 10x1000
@@ -17,13 +18,15 @@
 
 #define MAX_CHARGING_VOLTAGE	82	
 #define MAX_CHARGING_AMPERE		82	
-int scrTrunOnDuty;
+#define DEBUG		
 int readZeroCrossing_PC14 = PC14;
 int AmperePin =PA2;
 int VoltagePin =PA0;
 int scrOnOff_PA1 = PA1;
 float chargingAmpere=0;
+float goalAmpere=0;
 float chargingVoltage=0;
+float goalVoltage=0;
 float setChargingVoltage=0;
 float setChargingAmpere=0;
 volatile int risingStartFlag;
@@ -48,13 +51,18 @@ void handler_tm2()
 	if(!(isrCount % READ_AMPERE_PERIOD)){
 		readAmpereAndVoltage();
 	};
+#ifdef DEBUG
 	if( !(isrCount % 100000)){  // 10,000* 100 =  1,000,000 = 1S
 		Serial.print("Amp: "); Serial.print(chargingAmpere ); Serial.print("	vol: "); Serial.println((float)chargingVoltage ); Serial.println(analogRead(VoltagePin));
 	}
+#endif
 	//제로크로싱일 일어났고, 이제 전원공급이 시작되었다.
 	if(startTimer2 && scrStartDelayTime > 0  &&  
 			chargingVoltage <= MAX_CHARGING_VOLTAGE	 && 
-			chargingAmpere  <= MAX_CHARGING_AMPERE		){
+			chargingAmpere  <= MAX_CHARGING_AMPERE	 &&
+			goalAmpere > 0 &&
+			goalVoltage> 0 
+		){
 		scrStartDelayTime-- ;
 		digitalWrite(scrOnOff_PA1,0);
 		if(  scrStartDelayTime == 0 ){
