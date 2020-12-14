@@ -48,9 +48,34 @@ void handler_tm2()
 	noInterrupts();
 	isrCount++;
 	//주기적으로 전압과 전류를 읽는다.
+	// 10us*1000 = 10ms
 	if(!(isrCount % READ_AMPERE_PERIOD)){
 		readAmpereAndVoltage();
 	};
+	//충전전압을 올리거나 내려서 충전량을 조절한다.
+	//전류와 전압을 10번 읽을 때마다 수행한다. 그러므로 10ms*10= 100ms 
+	//즉 0.1초마다 값을 읽고 조절을 한.
+	// 약  800스텝을 조절할 수 있으므로 
+	// 400V의 경우 1스텝당2V의 조절이 가능하며 
+	// 0V->200V로 갈경우 100스텝 즉 0.1*100= 10s정도의 시간이 걸린다.
+	if(!(isrCount % (10*READ_AMPERE_PERIOD))){
+		//전압이 목표전압에 도달 했는지를 판단한다
+		//충전전압이 미달이고 충전전류도 미달일경우
+		if(chargingVoltage < goalVoltage &&	chargingAmpere  < goalAmpere )
+			scrStartDelayTime++;
+		// 충전전압은 미달인데 전류가 원하는데 까지 갔으면 
+		// 현 상태를 유지한다.
+		else if(chargingVoltage < goalVoltage &&	chargingAmpere  > goalAmpere )
+			scrStartDelayTime--;
+		//충전전압이 목표에 도달했으나 충전 전류가 아직 도달하지 않았을 경우  
+		//유지한다.
+		else if(chargingVoltage > goalVoltage &&	chargingAmpere  < goalAmpere )
+			scrStartDelayTime--;
+		//충전전압이 오버했으며 충전 전류도 오버했다.
+		else if(chargingVoltage > goalVoltage &&	chargingAmpere  > goalAmpere )
+			scrStartDelayTime--;
+
+	}
 #ifdef DEBUG
 	if( !(isrCount % 100000)){  // 10,000* 100 =  1,000,000 = 1S
 		Serial.print("Amp: "); Serial.print(chargingAmpere ); Serial.print("	vol: "); Serial.println((float)chargingVoltage ); Serial.println(analogRead(VoltagePin));
@@ -60,8 +85,8 @@ void handler_tm2()
 	if(startTimer2 && scrStartDelayTime > 0  &&  
 			chargingVoltage <= MAX_CHARGING_VOLTAGE	 && 
 			chargingAmpere  <= MAX_CHARGING_AMPERE	 &&
-			goalAmpere > 0 &&
-			goalVoltage> 0 
+			goalAmpere  > 0 &&
+			goalVoltage	> 0 
 		){
 		scrStartDelayTime-- ;
 		digitalWrite(scrOnOff_PA1,0);
