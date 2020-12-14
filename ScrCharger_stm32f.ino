@@ -75,6 +75,10 @@ void handler_tm2()
 		else if(chargingVoltage > goalVoltage &&	chargingAmpere  > goalAmpere )
 			scrStartDelayTime--;
 
+		//최소값이상 최대값이하를 리턴한다.
+		scrStartDelayTime = min(scrStartDelayTime , SCR_MAX_STARTTIME)   ;
+		scrStartDelayTime = max(scrStartDelayTime , SCR_MIN_STARTTIME)   ;
+
 	}
 	if(DEBUG)
 	if( !(isrCount % 100000)){  // 10,000* 100 =  1,000,000 = 1S

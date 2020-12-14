@@ -84,8 +84,8 @@ void showSetStatus(SerialCommands* sender)
 	sender->GetSerial()->println(goalVoltage);
 	sender->GetSerial()->println("AMP : ");
 	sender->GetSerial()->print(goalAmpere);
-	sender->GetSerial()->print("SCR : ");
-	sender->GetSerial()->println(scrStartDelayTimeSet);
+	sender->GetSerial()->println("SCR : ");
+	sender->GetSerial()->println(scrStartDelayTime);
 	sender->GetSerial()->print(">");
 }
 SerialCommand cmdSetVoltage("vol",readSettingVoltage);
