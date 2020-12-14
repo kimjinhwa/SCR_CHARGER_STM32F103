@@ -2,6 +2,20 @@
 #include <SPI.h>
 
 
+//SCR의 테이타 쉬트의 ONTIME은 100A/us이다
+// 50으로도 충분하다.
+#define TIMER2_SET_PERIOD	10  // 10us
+// this value is not depand on timer2
+#define SCRONTIME 			100
+
+#define SCR_MIN_STARTTIME	100
+//8300us = 8.3ms
+#define SCR_MAX_STARTTIME   830 
+#define SCR_DEFAULT_STARTTIME 820	
+//매 10ms마다 값을 읽는다. 10x1000
+#define READ_AMPERE_PERIOD	1000	
+
+#define MAX_CHARGING_VOLTAGE	82	
 int scrTrunOnDuty;
 int readZeroCrossing_PC14 = PC14;
 int AmperePin =PA2;
@@ -17,18 +31,6 @@ HardwareTimer timer(2);
 SPIClass SPI3(2);
 void handler_tm2(void);
 void readAmpereAndVoltage();
-//SCR의 테이타 쉬트의 ONTIME은 100A/us이다
-// 50으로도 충분하다.
-#define TIMER2_SET_PERIOD	10  // 10us
-// this value is not depand on timer2
-#define SCRONTIME 			100
-
-#define SCR_MIN_STARTTIME	100
-//8300us = 8.3ms
-#define SCR_MAX_STARTTIME   830 
-#define SCR_DEFAULT_STARTTIME 820	
-//매 10ms마다 값을 읽는다. 10x1000
-#define READ_AMPERE_PERIOD	1000	
 
 int scrStartDelayTime = SCR_DEFAULT_STARTTIME;//7000ms soft start를 시키기 위한 조건이다.
 int startTimer2 = false;
@@ -49,7 +51,7 @@ void handler_tm2()
 		Serial.print("Amp: "); Serial.print(chargingAmpere ); Serial.print("	vol: "); Serial.println((float)chargingVoltage ); Serial.println(analogRead(VoltagePin));
 	}
 	//제로크로싱일 일어났고, 이제 전원공급이 시작되었다.
-	if(startTimer2 && scrStartDelayTime > 0 ){
+	if(startTimer2 && scrStartDelayTime > 0  &&  chargingVoltage <= MAX_CHARGING_VOLTAGE	){
 		scrStartDelayTime-- ;
 		digitalWrite(scrOnOff_PA1,0);
 		if(  scrStartDelayTime == 0 ){
