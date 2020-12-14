@@ -1,4 +1,4 @@
-
+#include <SerialCommands.h>
 #include <SPI.h>
 
 
@@ -18,7 +18,7 @@
 
 #define MAX_CHARGING_VOLTAGE	82	
 #define MAX_CHARGING_AMPERE		82	
-#define DEBUG		
+int	DEBUG=	0;
 int readZeroCrossing_PC14 = PC14;
 int AmperePin =PA2;
 int VoltagePin =PA0;
@@ -76,11 +76,12 @@ void handler_tm2()
 			scrStartDelayTime--;
 
 	}
-#ifdef DEBUG
+	if(DEBUG)
 	if( !(isrCount % 100000)){  // 10,000* 100 =  1,000,000 = 1S
-		Serial.print("Amp: "); Serial.print(chargingAmpere ); Serial.print("	vol: "); Serial.println((float)chargingVoltage ); Serial.println(analogRead(VoltagePin));
+    	digitalWrite(PC13,!digitalRead(PC13));
+		Serial.print("Amp: "); Serial.print(chargingAmpere ); 
+		Serial.print("	vol: "); Serial.println((float)chargingVoltage ); 
 	}
-#endif
 	//제로크로싱일 일어났고, 이제 전원공급이 시작되었다.
 	if(startTimer2 && scrStartDelayTime > 0  &&  
 			chargingVoltage <= MAX_CHARGING_VOLTAGE	 && 
@@ -128,6 +129,7 @@ void setup() {
     //SPI3.attachInterrupt();
     //SPI3.onReceive(spiOnReceive);
 	Serial.begin(115200);
+	serialCommandSetup();
 	SPI3.setModule(3);
 }
 void setupSPI(){
@@ -159,19 +161,6 @@ void button_ISR_CHANGE()
   */
 }
 
-void SerialReadInput(){
-	if (Serial.available() > 0) {
-		String readString;
-		readString = Serial.readString();
-		scrStartDelayTimeSet = readString.toInt();//(atoi(readString);
-		if(scrStartDelayTimeSet < SCR_MIN_STARTTIME)
-			scrStartDelayTimeSet =SCR_MIN_STARTTIME;
-		if(scrStartDelayTimeSet > SCR_MAX_STARTTIME)
-			scrStartDelayTimeSet = SCR_MAX_STARTTIME	;
-
-		Serial.println(scrStartDelayTimeSet );
-	}
-}
 void readAmpereAndVoltage()
 {
     float ampere  = (float)(analogRead(AmperePin)) * 3.3/4096 ;
@@ -187,10 +176,10 @@ void readAmpereAndVoltage()
 }
 // uint8_t msg = SPI3.transfer(++count);
 void loop() {
-    SerialReadInput();
-    digitalWrite(PC13,!digitalRead(PC13));
+   	//SerialReadInput();
+	serialReadCommand();
     //sendSPI();
-    delay(100);// every 100ms
+    //delay(100);// every 100ms
 }
 void sendSPI()
 {
